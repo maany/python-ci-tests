@@ -1,35 +1,57 @@
-workflows:
-  version: 2
+#workflows:
+#  version: 2
+#
+#  test:
+#    jobs:
+#      - test
+#
+#version: 2
+#
+#jobs:
+#  test:
+#    working_directory: ~/circleci-simple-grid-yaml-compiler
+#    docker: # run the steps with Docker
+#      - image: circleci/python:3.6.10
+#        environment:
+#          PIPENV_VENV_IN_PROJECT: true
+#    steps:
+#      - checkout
+#      - run: sudo chown -R circleci:circleci /usr/local/bin
+#      - run: sudo chown -R circleci:circleci /usr/local/lib
+#      - restore_cache:
+#          key: deps9-{{ .Branch }}-{{ checksum "Pipfile.lock" }}
+#      - run:
+#          command: |
+#            sudo pip install pipenv
+#            pipenv install
+#      - save_cache:
+#          key: deps9-{{ .Branch }}-{{ checksum "Pipfile.lock" }}
+#          paths:
+#            - ".venv"
+#            - "/usr/local/bin"
+#            - "/usr/local/lib"
+#      - run:
+#          command: |
+#            pipenv run python -m unittest discover
 
-  test:
-    jobs:
-      - test
+version: 2.1
 
-version: 2
+orbs:
+  python: circleci/python@0.2.1
 
 jobs:
-  test:
-    working_directory: ~/circleci-simple-grid-yaml-compiler
-    docker: # run the steps with Docker
-      - image: circleci/python:3.6.10
-        environment:
-          PIPENV_VENV_IN_PROJECT: true
+  build-and-test:
+    executor: python/default
     steps:
       - checkout
-      - run: sudo chown -R circleci:circleci /usr/local/bin
-      - run: sudo chown -R circleci:circleci /usr/local/lib
-      - restore_cache:
-          key: deps9-{{ .Branch }}-{{ checksum "Pipfile.lock" }}
+      - python/load-cache
+      - python/install-deps
+      - python/save-cache
       - run:
-          command: |
-            sudo pip install pipenv
-            pipenv install
-      - save_cache:
-          key: deps9-{{ .Branch }}-{{ checksum "Pipfile.lock" }}
-          paths:
-            - ".venv"
-            - "/usr/local/bin"
-            - "/usr/local/lib"
-      - run:
-          command: |
-            pipenv run python -m unittest discover
+          command: ./manage.py test
+          name: Test
+
+workflows:
+  main:
+    jobs:
+      - build-and-test
